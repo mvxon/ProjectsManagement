@@ -1,19 +1,19 @@
 package com.strigalev.projectsmanagement.controller;
 
-import com.strigalev.projectsmanagement.domain.Task;
-import com.strigalev.projectsmanagement.dto.ProjectDTO;
 import com.strigalev.projectsmanagement.dto.TaskDTO;
+import com.strigalev.projectsmanagement.exception.ResourceNotFoundException;
+import com.strigalev.projectsmanagement.service.PageService;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.service.TaskService;
+import com.strigalev.projectsmanagement.util.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,58 +21,57 @@ import java.util.Map;
 public class TaskController {
     private final TaskService taskService;
     private final ProjectService projectService;
+    private final PageService<TaskDTO> pageService;
 
     @GetMapping("{projectId}")
     public ResponseEntity<?> getAllProjectTasks(@PathVariable Long projectId) {
-        Map<String, String> response = new LinkedHashMap<>();
+        return ResponseEntity.ok(taskService.getAllTasksByProjectId(projectId));
+    }
 
+    @GetMapping("{projectId}/page")
+    public ResponseEntity<?> getTasksPage(
+            @PathVariable Long projectId,
+            int pageNumber,
+            int pageSize,
+            String sortBy,
+            String sortDir
+    ) {
         if (!projectService.isProjectWithIdExists(projectId)) {
-            response.put("error", String.format("Project with %oid don't exists", projectId));
-            return ResponseEntity.badRequest().body(response);
+            throw new ResourceNotFoundException(String.format("Project with %oid does not exists", projectId));
         }
-
-        List<TaskDTO> tasks = taskService.getAllTasksByProjectId(projectId);
-        if (tasks.isEmpty()) {
-            response.put("error", String.format("Project with %oid don't have tasks", projectId));
-            return ResponseEntity.badRequest().body(response);
-        }
-
-        return ResponseEntity.ok(tasks);
+        return new ResponseEntity<>(pageService.getPage(
+                PageRequest.of(
+                        pageNumber, pageSize,
+                        sortDir.equalsIgnoreCase("asc") ?
+                                Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
+                )
+        ), HttpStatus.OK);
     }
 
     @PostMapping("{projectId}")
-    public ResponseEntity<?> createTaskInProject(@PathVariable Long projectId,
-                                                 @RequestBody @Valid TaskDTO taskDTO,
-                                                 BindingResult bindingResult
+    public ResponseEntity<?> createTaskInProject(@PathVariable Long projectId, @RequestBody @Valid TaskDTO taskDTO
     ) {
-        // переделать, сначала проверка на существование проекта
-        Map<String, Object> response = new LinkedHashMap<>(taskService.createTask(taskDTO, bindingResult));
-        if (response.get("created") == Boolean.FALSE) {
-            return ResponseEntity.badRequest().body(response);
+        if (!projectService.isProjectWithIdExists(projectId)) {
+            throw new ResourceNotFoundException(String.format("Project with %oid does not exists", projectId));
         }
-        Long id = (Long) taskService.createTask(taskDTO, bindingResult).get("id");
-        response.putAll(projectService.addTaskToProject(projectId, id));
-        if (response.get("added") == Boolean.FALSE) {
-            return ResponseEntity.badRequest().body(response);
+        ApiResponse apiResponse = new ApiResponse();
+        Long taskId = taskService.createTask(taskDTO);
+        if (projectService.addTaskToProject(projectId, taskId)) {
+            apiResponse.setObjectId(taskId);
         }
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(apiResponse);
     }
 
     @DeleteMapping("{taskId}")
     public ResponseEntity<?> deleteTask(@PathVariable Long taskId) {
-        Map<String, Object> response = new LinkedHashMap<>(taskService.softDeleteTask(taskId));
-        if (response.get("deleted") == Boolean.FALSE) {
-            return ResponseEntity.badRequest().body(response);
-        }
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(taskService.softDeleteTask(taskId));
     }
 
-    @PutMapping
-    public ResponseEntity<?> updateTask(@RequestBody @Valid TaskDTO taskDTO, BindingResult bindingResult) {
-        Map<String, Object> response = new LinkedHashMap<>(taskService.updateTask(taskDTO, bindingResult));
-        if (response.get("changed") == Boolean.TRUE) {
-            return ResponseEntity.ok(response);
-        }
-        return ResponseEntity.badRequest().body(response);
+    @PutMapping("{id}")
+    public ResponseEntity<?> updateTask(@PathVariable Long id, @RequestBody @Valid TaskDTO taskDTO) {
+        ApiResponse apiResponse = new ApiResponse();
+        taskDTO.setId(id);
+        apiResponse.setMessage("updated : " + taskService.updateTask(taskDTO));
+        return ResponseEntity.ok(apiResponse);
     }
 }

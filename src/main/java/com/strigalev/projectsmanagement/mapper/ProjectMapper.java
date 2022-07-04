@@ -6,14 +6,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 
-import java.util.List;
-
-
 @Mapper(componentModel = "spring")
 public interface ProjectMapper {
     ProjectDTO map(Project project);
-
-    List<ProjectDTO> map(List<Project> projects);
 
     @Mapping(target = "tasks", ignore = true)
     @Mapping(target = "employees", ignore = true)

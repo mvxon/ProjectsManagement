@@ -1,62 +1,67 @@
 package com.strigalev.projectsmanagement.controller;
 
 import com.strigalev.projectsmanagement.dto.ProjectDTO;
+import com.strigalev.projectsmanagement.service.PageService;
 import com.strigalev.projectsmanagement.service.ProjectService;
+import com.strigalev.projectsmanagement.util.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/projects")
 public class ProjectController {
     private final ProjectService projectService;
+    private final PageService<ProjectDTO> pageService;
+
+    @GetMapping("page")
+    public ResponseEntity<?> getProjectsPage(int pageNumber, int pageSize, String sortBy, String sortDir) {
+        return new ResponseEntity<>(pageService.getPage(
+                PageRequest.of(
+                        pageNumber, pageSize,
+                        sortDir.equalsIgnoreCase("asc") ?
+                                Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
+                )
+        ), HttpStatus.OK);
+    }
 
     @GetMapping
-    public ResponseEntity<?> getAllProjects() {
+    public ResponseEntity<?> getAllProject() {
         return ResponseEntity.ok(projectService.getAllProjects());
     }
 
-    @GetMapping("/{id}")
+
+    @GetMapping("{id}")
     public ResponseEntity<?> getProjectById(@PathVariable Long id) {
-        if (!projectService.isProjectWithIdExists(id)) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", String.format("Project with %oid does not exists", id));
-            return ResponseEntity.badRequest().body(response);
-        }
         return ResponseEntity.ok(projectService.getProjectById(id));
     }
 
     @PostMapping
-    public ResponseEntity<?> createProject(@RequestBody @Valid ProjectDTO projectDTO, BindingResult bindingResult) {
-        Map<String, Object> response = new LinkedHashMap<>(projectService.createProject(projectDTO, bindingResult));
-        if (response.get("created") == Boolean.TRUE) {
-            return ResponseEntity.ok(response);
-        }
-        return ResponseEntity.badRequest().body(response);
+    public ResponseEntity<?> createProject(@RequestBody @Valid ProjectDTO projectDTO) {
+        return new ResponseEntity<>(
+                ApiResponse.builder()
+                        .objectId(projectService.createProject(projectDTO))
+                        .build(),
+                HttpStatus.CREATED
+        );
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("{id}")
     public ResponseEntity<?> deleteProject(@PathVariable Long id) {
-        Map<String, Object> response = new LinkedHashMap<>(projectService.softDeleteProject(id));
-        if (response.get("deleted") == Boolean.TRUE) {
-            return ResponseEntity.ok(response);
-        }
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.ok(projectService.softDeleteProject(id));
     }
 
-    @PutMapping
-    public ResponseEntity<?> updateProject(@RequestBody @Valid ProjectDTO projectDTO, BindingResult bindingResult) {
-        Map<String, Object> response = new LinkedHashMap<>(projectService.updateProject(projectDTO, bindingResult));
-        if (response.get("changed") == Boolean.TRUE) {
-            ResponseEntity.ok(response);
-        }
-        return ResponseEntity.badRequest().body(response);
+    @PutMapping("{id}")
+    public ResponseEntity<?> updateProject(@PathVariable Long id, @RequestBody @Valid ProjectDTO projectDTO) {
+        ApiResponse apiResponse = new ApiResponse();
+        projectDTO.setId(id);
+        apiResponse.setMessage("updated : " + projectService.updateProject(projectDTO));
+        return ResponseEntity.ok(apiResponse);
     }
 }
