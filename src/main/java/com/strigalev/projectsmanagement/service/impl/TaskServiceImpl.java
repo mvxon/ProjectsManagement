@@ -3,42 +3,41 @@ package com.strigalev.projectsmanagement.service.impl;
 import com.strigalev.projectsmanagement.domain.Project;
 import com.strigalev.projectsmanagement.domain.Task;
 import com.strigalev.projectsmanagement.dto.TaskDTO;
+import com.strigalev.projectsmanagement.exception.ResourceNotFoundException;
 import com.strigalev.projectsmanagement.mapper.TaskMapper;
+import com.strigalev.projectsmanagement.mapper.TasksListMapper;
 import com.strigalev.projectsmanagement.repository.TaskRepository;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.service.TaskService;
-import com.strigalev.projectsmanagement.validation.GetErrorsAction;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindingResult;
 
 import javax.transaction.Transactional;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
     private final TaskMapper taskMapper;
+    private final TasksListMapper tasksListMapper;
     private final TaskRepository taskRepository;
     private final ProjectService projectService;
-    private final GetErrorsAction getErrorsAction;
 
     @Override
     public List<TaskDTO> getAllTasksByProjectId(Long projectId) {
         Project project = projectService.getProjectById(projectId);
-        if (project == null) {
-            return null;
-        }
-        return taskMapper.map(project.getTasks());
+        return tasksListMapper.map(project.getTasks());
     }
 
     @Override
     public Task getTaskById(Long id) {
-        return taskRepository.findById(id).orElse(null);
+        return taskRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException(String.format("Task with %oid does not exists", id))
+        );
     }
 
     private Task copyTask(Task task) {
@@ -54,19 +53,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Map<String, ?> updateTask(TaskDTO taskDTO, BindingResult bindingResult) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "changed";
-        result.put(message, Boolean.FALSE);
-        Task oldTask = taskRepository.findById(taskDTO.getId()).orElse(null);
-        if (oldTask == null) {
-            result.put("error", String.format("Task with %oid does not exists", taskDTO.getId()));
-            return result;
-        }
-        if (bindingResult.hasErrors()) {
-            result.putAll(getErrorsAction.execute(bindingResult));
-            return result;
-        }
+    public boolean updateTask(TaskDTO taskDTO) {
+        Task oldTask = taskRepository.findById(taskDTO.getId()).orElseThrow(
+                () -> new ResourceNotFoundException(String.format("Task with %oid does not exists",
+                        taskDTO.getId()))
+        );
         Task newTask = copyTask(oldTask);
         if (!Objects.equals(oldTask.getTitle(), taskDTO.getTitle())) {
             newTask.setTitle(taskDTO.getTitle());
@@ -78,48 +69,37 @@ public class TaskServiceImpl implements TaskService {
             newTask.setDeadLineDate(LocalDate.parse(taskDTO.getDeadLineDate()));
         }
         if (!oldTask.equals(newTask)) {
-            result.put(message, Boolean.TRUE);
             taskRepository.save(newTask);
+            return true;
         }
-        return result;
+        return false;
     }
 
     @Override
     @Transactional
-    public Map<String, ?> createTask(TaskDTO taskDTO, BindingResult bindingResult) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "created";
-
-        if (bindingResult.hasErrors()) {
-            result.put(message, Boolean.FALSE);
-            result.putAll(getErrorsAction.execute(bindingResult));
-            return result;
-        }
-
+    public Long createTask(TaskDTO taskDTO) {
         Task task = taskMapper.map(taskDTO);
         task.setCreationDate(LocalDate.now());
         task.setDeadLineDate(LocalDate.parse(taskDTO.getDeadLineDate()));
         task.setActive(true);
         taskRepository.save(task);
-        result.put(message, Boolean.TRUE);
-        result.put("id", task.getId());
-        return result;
+        return task.getId();
     }
 
     @Override
     @Transactional
-    public Map<String, ?> softDeleteTask(Long taskId) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "deleted";
-        result.put(message, Boolean.FALSE);
-        Task task = taskRepository.findById(taskId).orElse(null);
-        if (task == null) {
-            result.put("error:", String.format("Task with %oid does not exists", taskId));
-            return result;
-        }
+    public boolean softDeleteTask(Long id) {
+        Task task = taskRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException(String.format("Task with %oid does not exists", id))
+        );
         task.setActive(false);
-        taskRepository.save(task);
-        result.put(message, Boolean.TRUE);
-        return result;
+        return true;
     }
+
+    @Override
+    public Page<TaskDTO> getPage(Pageable pageable) {
+        Page<Task> tasks = taskRepository.findAll(pageable);
+        return tasks.map(tasksListMapper::map);
+    }
+
 }

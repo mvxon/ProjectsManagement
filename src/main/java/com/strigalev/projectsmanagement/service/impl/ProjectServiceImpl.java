@@ -2,21 +2,20 @@ package com.strigalev.projectsmanagement.service.impl;
 
 import com.strigalev.projectsmanagement.domain.Project;
 import com.strigalev.projectsmanagement.dto.ProjectDTO;
+import com.strigalev.projectsmanagement.exception.ResourceNotFoundException;
 import com.strigalev.projectsmanagement.mapper.ProjectMapper;
 import com.strigalev.projectsmanagement.mapper.ProjectsListMapper;
 import com.strigalev.projectsmanagement.repository.ProjectRepository;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.service.TaskService;
-import com.strigalev.projectsmanagement.validation.GetErrorsAction;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindingResult;
 
 import javax.transaction.Transactional;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -25,51 +24,42 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMapper projectMapper;
     private final ProjectsListMapper projectsListMapper;
     private final TaskService taskService;
-    private final GetErrorsAction getErrorsAction;
 
     public ProjectServiceImpl(ProjectRepository projectRepository,
                               ProjectMapper projectMapper,
                               ProjectsListMapper projectsListMapper,
-                              @Lazy TaskService taskService,
-                              GetErrorsAction getErrorsAction) {
+                              @Lazy TaskService taskService
+    ) {
         this.projectRepository = projectRepository;
         this.projectMapper = projectMapper;
         this.projectsListMapper = projectsListMapper;
         this.taskService = taskService;
-        this.getErrorsAction = getErrorsAction;
     }
 
     @Override
     @Transactional
     public Project getProjectById(Long id) {
-        return projectRepository.findById(id).orElse(null);
+        return projectRepository.findById(id)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(String.format("Project with %oid does not exists", id))
+                );
     }
 
     @Override
     @Transactional
-    public Map<String, ?> createProject(ProjectDTO projectDTO, BindingResult bindingResult) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "created";
-
-        if (bindingResult.hasErrors()) {
-            result.put(message, Boolean.FALSE);
-            result.putAll(getErrorsAction.execute(bindingResult));
-            return result;
-        }
-
+    public Long createProject(ProjectDTO projectDTO) {
         Project project = projectMapper.map(projectDTO);
         project.setCreationDate(LocalDate.now());
         project.setDeadLineDate(LocalDate.parse(projectDTO.getDeadLineDate()));
         project.setActive(true);
         projectRepository.save(project);
-        result.put(message, Boolean.TRUE);
-        result.put("id", project.getId());
-        return result;
+        return project.getId();
     }
 
     @Override
     @Transactional
     public List<ProjectDTO> getAllProjects() {
+        projectRepository.findAll();
         return projectsListMapper.map(projectRepository.findAll());
     }
 
@@ -107,19 +97,12 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public Map<String, ?> updateProject(ProjectDTO projectDTO, BindingResult bindingResult) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "changed";
-        result.put(message, Boolean.FALSE);
-        Project oldProject = projectRepository.findById(projectDTO.getId()).orElse(null);
-        if (oldProject == null) {
-            result.put("error", "not exists");
-            return result;
-        }
-        if (bindingResult.hasErrors()) {
-            result.putAll(getErrorsAction.execute(bindingResult));
-            return result;
-        }
+    public boolean updateProject(ProjectDTO projectDTO) {
+        Project oldProject = projectRepository.findById(projectDTO.getId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(String.format("Project with %oid does not exists",
+                                projectDTO.getId()))
+                );
         Project newProject = copyProject(oldProject);
         if (!Objects.equals(oldProject.getName(), projectDTO.getName())) {
             newProject.setName(projectDTO.getName());
@@ -131,52 +114,44 @@ public class ProjectServiceImpl implements ProjectService {
             newProject.setDescription(projectDTO.getDescription());
         }
         if (!Objects.equals(oldProject.getCustomer(), projectDTO.getCustomer())) {
-            newProject.setDescription(projectDTO.getCustomer());
-        }
-        if (!Objects.equals(oldProject.getCustomer(), projectDTO.getCustomer())) {
-            newProject.setDescription(projectDTO.getCustomer());
+            newProject.setCustomer(projectDTO.getCustomer());
         }
         if (!Objects.equals(oldProject.getDeadLineDate(), LocalDate.parse(projectDTO.getDeadLineDate()))) {
             newProject.setDeadLineDate(LocalDate.parse(projectDTO.getDeadLineDate()));
         }
-        if (!oldProject.equals(newProject)) {
+        if (!Objects.equals(oldProject, newProject)) {
             projectRepository.save(newProject);
-            result.put(message, Boolean.TRUE);
+            return true;
         }
-        return result;
+        return false;
     }
 
     @Override
     @Transactional
-    public Map<String, ?> softDeleteProject(Long id) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "deleted";
-        result.put(message, Boolean.FALSE);
+    public boolean softDeleteProject(Long id) {
         Project project = projectRepository.findById(id).orElse(null);
-        if (project == null) {
-            result.put("error:", String.format("Project with %oid does not exists", id));
-            return result;
+        if (Objects.isNull(project)) {
+            throw new ResourceNotFoundException(String.format("Project with %oid does not exists", id));
         }
-        result.put(message, Boolean.TRUE);
         project.setActive(false);
         projectRepository.save(project);
-        return result;
+        return true;
     }
 
     @Override
-    public Map<String, ?> addTaskToProject(Long projectId, Long taskId) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "added";
-        result.put(message, Boolean.FALSE);
-        Project project = projectRepository.findById(projectId).orElse(null);
-        if (project == null) {
-            result.put("error:", String.format("Project with %oid does not exists", projectId));
-            return result;
-        }
+    public boolean addTaskToProject(Long projectId, Long taskId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(String.format("Project with %oid does not exists",
+                                projectId))
+                );
         project.getTasks().add(taskService.getTaskById(taskId));
-        result.put(message, Boolean.TRUE);
-        return result;
+        return true;
     }
 
-
+    @Override
+    public Page<ProjectDTO> getPage(Pageable pageable) {
+        Page<Project> projects = projectRepository.findAll(pageable);
+        return projects.map(projectsListMapper::map);
+    }
 }

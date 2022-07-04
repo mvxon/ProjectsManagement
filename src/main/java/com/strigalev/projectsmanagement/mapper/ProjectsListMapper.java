@@ -5,6 +5,7 @@ import com.strigalev.projectsmanagement.dto.ProjectDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -21,4 +22,5 @@ public interface ProjectsListMapper {
     ProjectDTO map(Project project);
 
     List<ProjectDTO> map(List<Project> projects);
+
 }

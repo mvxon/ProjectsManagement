@@ -3,19 +3,17 @@ package com.strigalev.projectsmanagement.service;
 
 import com.strigalev.projectsmanagement.domain.Task;
 import com.strigalev.projectsmanagement.dto.TaskDTO;
-import org.springframework.validation.BindingResult;
 
 import java.util.List;
-import java.util.Map;
 
-public interface TaskService {
-    Map<String, ?> createTask(TaskDTO taskDTO, BindingResult bindingResult);
+public interface TaskService extends PageService<TaskDTO> {
+    Long createTask(TaskDTO taskDTO);
 
     List<TaskDTO> getAllTasksByProjectId(Long projectId);
 
     Task getTaskById(Long id);
 
-    Map<String, ?> updateTask(TaskDTO taskDTO, BindingResult bindingResult);
+    boolean updateTask(TaskDTO taskDTO);
 
-    Map<String, ?> softDeleteTask(Long taskId);
+    boolean softDeleteTask(Long id);
 }
