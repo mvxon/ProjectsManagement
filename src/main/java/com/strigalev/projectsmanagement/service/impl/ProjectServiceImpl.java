@@ -46,6 +46,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public ProjectDTO getProjectDtoById(Long id) {
+        return projectMapper.map(getProjectById(id));
+    }
+
+    @Override
     @Transactional
     public Long createProject(ProjectDTO projectDTO) {
         Project project = projectMapper.map(projectDTO);
@@ -150,7 +155,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Page<ProjectDTO> getPage(Pageable pageable) {
+    public Page<ProjectDTO> getProjectsPage(Pageable pageable) {
         Page<Project> projects = projectRepository.findAll(pageable);
         return projects.map(projectsListMapper::map);
     }

@@ -1,7 +1,6 @@
 package com.strigalev.projectsmanagement.controller;
 
 import com.strigalev.projectsmanagement.dto.ProjectDTO;
-import com.strigalev.projectsmanagement.service.PageService;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.util.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,28 +17,35 @@ import javax.validation.Valid;
 @RequestMapping("/api/v1/projects")
 public class ProjectController {
     private final ProjectService projectService;
-    private final PageService<ProjectDTO> pageService;
 
     @GetMapping("page")
-    public ResponseEntity<?> getProjectsPage(int pageNumber, int pageSize, String sortBy, String sortDir) {
-        return new ResponseEntity<>(pageService.getPage(
-                PageRequest.of(
-                        pageNumber, pageSize,
-                        sortDir.equalsIgnoreCase("asc") ?
-                                Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
-                )
-        ), HttpStatus.OK);
+    public ResponseEntity<?> getProjectsPage(
+            @RequestParam(defaultValue = "0") Integer pageNumber,
+            @RequestParam(defaultValue = "3") Integer pageSize,
+            @RequestParam(defaultValue = "creationDate") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        return new ResponseEntity<>(
+                projectService.getProjectsPage(PageRequest.of(
+                                pageNumber,
+                                pageSize,
+                                sortDir.equalsIgnoreCase("asc") ?
+                                        Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
+                        )
+                ),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllProject() {
+    public ResponseEntity<?> getAllProjects() {
         return ResponseEntity.ok(projectService.getAllProjects());
     }
 
 
     @GetMapping("{id}")
     public ResponseEntity<?> getProjectById(@PathVariable Long id) {
-        return ResponseEntity.ok(projectService.getProjectById(id));
+        return ResponseEntity.ok(projectService.getProjectDtoById(id));
     }
 
     @PostMapping

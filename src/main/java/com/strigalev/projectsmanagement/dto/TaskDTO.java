@@ -19,6 +19,7 @@ import java.util.List;
 public class TaskDTO {
     private Long id;
 
+    @NotEmpty(message = "Title should not be empty")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Size(min = 7, max = 40, message = "Title length should be between {min} and {max} chars")
     private String title;

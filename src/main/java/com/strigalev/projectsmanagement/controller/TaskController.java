@@ -2,7 +2,6 @@ package com.strigalev.projectsmanagement.controller;
 
 import com.strigalev.projectsmanagement.dto.TaskDTO;
 import com.strigalev.projectsmanagement.exception.ResourceNotFoundException;
-import com.strigalev.projectsmanagement.service.PageService;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.service.TaskService;
 import com.strigalev.projectsmanagement.util.ApiResponse;
@@ -21,30 +20,35 @@ import javax.validation.Valid;
 public class TaskController {
     private final TaskService taskService;
     private final ProjectService projectService;
-    private final PageService<TaskDTO> pageService;
 
-    @GetMapping("{projectId}")
+    @GetMapping("/project/{projectId}")
     public ResponseEntity<?> getAllProjectTasks(@PathVariable Long projectId) {
         return ResponseEntity.ok(taskService.getAllTasksByProjectId(projectId));
+    }
+
+    @GetMapping("{id}")
+    public ResponseEntity<?> getTaskById(@PathVariable Long id) {
+        return ResponseEntity.ok(taskService.getTaskDtoById(id));
     }
 
     @GetMapping("{projectId}/page")
     public ResponseEntity<?> getTasksPage(
             @PathVariable Long projectId,
-            int pageNumber,
-            int pageSize,
-            String sortBy,
-            String sortDir
+            @RequestParam(defaultValue = "0") Integer pageNumber,
+            @RequestParam(defaultValue = "3") Integer pageSize,
+            @RequestParam(defaultValue = "creation_date") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
     ) {
         if (!projectService.isProjectWithIdExists(projectId)) {
             throw new ResourceNotFoundException(String.format("Project with %oid does not exists", projectId));
         }
-        return new ResponseEntity<>(pageService.getPage(
+        return new ResponseEntity<>(taskService.getProjectTasksPage(
                 PageRequest.of(
-                        pageNumber, pageSize,
+                        pageNumber,
+                        pageSize,
                         sortDir.equalsIgnoreCase("asc") ?
                                 Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
-                )
+                ), projectId
         ), HttpStatus.OK);
     }
 

@@ -40,6 +40,11 @@ public class TaskServiceImpl implements TaskService {
         );
     }
 
+    @Override
+    public TaskDTO getTaskDtoById(Long id) {
+        return taskMapper.map(getTaskById(id));
+    }
+
     private Task copyTask(Task task) {
         return Task.builder()
                 .id(task.getId())
@@ -97,8 +102,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Page<TaskDTO> getPage(Pageable pageable) {
-        Page<Task> tasks = taskRepository.findAll(pageable);
+    public Page<TaskDTO> getProjectTasksPage(Pageable pageable, Long projectId) {
+        Page<Task> tasks = taskRepository.findAllByProjectId(pageable, projectId);
         return tasks.map(tasksListMapper::map);
     }
 
