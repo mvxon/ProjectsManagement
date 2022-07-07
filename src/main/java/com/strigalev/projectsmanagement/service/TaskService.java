@@ -22,4 +22,6 @@ public interface TaskService {
     boolean softDeleteTask(Long id);
 
     Page<TaskDTO> getProjectTasksPage(Pageable pageable, Long projectId);
+
+    Page<TaskDTO> getProjectActiveTasksPage(Pageable pageable, Long projectId);
 }

@@ -2,6 +2,7 @@ package com.strigalev.projectsmanagement.exception;
 
 import com.strigalev.projectsmanagement.util.GetErrorsAction;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +31,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex,
-                                                             Object body,
-                                                             HttpHeaders headers,
-                                                             HttpStatus status,
-                                                             WebRequest request) {
+                                                                      Object body,
+                                                                      HttpHeaders headers,
+                                                                      HttpStatus status,
+                                                                      WebRequest request) {
         return new ResponseEntity<>(ApiException.builder()
                 .errorCode(ex.getMessage())
                 .status(status)

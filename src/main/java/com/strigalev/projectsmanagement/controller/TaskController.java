@@ -21,17 +21,12 @@ public class TaskController {
     private final TaskService taskService;
     private final ProjectService projectService;
 
-    @GetMapping("/project/{projectId}")
-    public ResponseEntity<?> getAllProjectTasks(@PathVariable Long projectId) {
-        return ResponseEntity.ok(taskService.getAllTasksByProjectId(projectId));
-    }
-
     @GetMapping("{id}")
     public ResponseEntity<?> getTaskById(@PathVariable Long id) {
         return ResponseEntity.ok(taskService.getTaskDtoById(id));
     }
 
-    @GetMapping("{projectId}/page")
+    @GetMapping("/project/{projectId}")
     public ResponseEntity<?> getTasksPage(
             @PathVariable Long projectId,
             @RequestParam(defaultValue = "0") Integer pageNumber,
@@ -40,9 +35,9 @@ public class TaskController {
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
         if (!projectService.isProjectWithIdExists(projectId)) {
-            throw new ResourceNotFoundException(String.format("Project with %oid does not exists", projectId));
+            throw new ResourceNotFoundException("Project", projectId);
         }
-        return new ResponseEntity<>(taskService.getProjectTasksPage(
+        return new ResponseEntity<>(taskService.getProjectActiveTasksPage(
                 PageRequest.of(
                         pageNumber,
                         pageSize,
@@ -56,7 +51,7 @@ public class TaskController {
     public ResponseEntity<?> createTaskInProject(@PathVariable Long projectId, @RequestBody @Valid TaskDTO taskDTO
     ) {
         if (!projectService.isProjectWithIdExists(projectId)) {
-            throw new ResourceNotFoundException(String.format("Project with %oid does not exists", projectId));
+            throw new ResourceNotFoundException("Project", projectId);
         }
         ApiResponse apiResponse = new ApiResponse();
         Long taskId = taskService.createTask(taskDTO);
@@ -66,9 +61,9 @@ public class TaskController {
         return ResponseEntity.ok(apiResponse);
     }
 
-    @DeleteMapping("{taskId}")
-    public ResponseEntity<?> deleteTask(@PathVariable Long taskId) {
-        return ResponseEntity.ok(taskService.softDeleteTask(taskId));
+    @DeleteMapping("{id}")
+    public ResponseEntity<?> deleteTask(@PathVariable Long id) {
+        return ResponseEntity.ok(taskService.softDeleteTask(id));
     }
 
     @PutMapping("{id}")

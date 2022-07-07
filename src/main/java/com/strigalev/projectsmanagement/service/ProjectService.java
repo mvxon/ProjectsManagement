@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
+
 public interface ProjectService {
 
     Project getProjectById(Long id);
@@ -30,5 +31,7 @@ public interface ProjectService {
     boolean addTaskToProject(Long projectId, Long taskId);
 
     Page<ProjectDTO> getProjectsPage(Pageable pageable);
+
+    Page<ProjectDTO> getActiveProjectsPage(Pageable pageable);
 
 }

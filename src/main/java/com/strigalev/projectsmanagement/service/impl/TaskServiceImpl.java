@@ -36,7 +36,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Task getTaskById(Long id) {
         return taskRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException(String.format("Task with %oid does not exists", id))
+                () -> new ResourceNotFoundException("Task", id)
         );
     }
 
@@ -60,8 +60,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public boolean updateTask(TaskDTO taskDTO) {
         Task oldTask = taskRepository.findById(taskDTO.getId()).orElseThrow(
-                () -> new ResourceNotFoundException(String.format("Task with %oid does not exists",
-                        taskDTO.getId()))
+                () -> new ResourceNotFoundException("Task", taskDTO.getId())
         );
         Task newTask = copyTask(oldTask);
         if (!Objects.equals(oldTask.getTitle(), taskDTO.getTitle())) {
@@ -95,7 +94,7 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public boolean softDeleteTask(Long id) {
         Task task = taskRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException(String.format("Task with %oid does not exists", id))
+                () -> new ResourceNotFoundException("Task", id)
         );
         task.setActive(false);
         return true;
@@ -104,6 +103,12 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Page<TaskDTO> getProjectTasksPage(Pageable pageable, Long projectId) {
         Page<Task> tasks = taskRepository.findAllByProjectId(pageable, projectId);
+        return tasks.map(tasksListMapper::map);
+    }
+
+    @Override
+    public Page<TaskDTO> getProjectActiveTasksPage(Pageable pageable, Long projectId) {
+        Page<Task> tasks = taskRepository.findAllByProjectIdAndActiveIsTrue(pageable, projectId);
         return tasks.map(tasksListMapper::map);
     }
 

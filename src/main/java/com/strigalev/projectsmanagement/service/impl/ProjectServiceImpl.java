@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
+
 @Service
 public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
@@ -41,7 +42,7 @@ public class ProjectServiceImpl implements ProjectService {
     public Project getProjectById(Long id) {
         return projectRepository.findById(id)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(String.format("Project with %oid does not exists", id))
+                        () -> new ResourceNotFoundException("Project", id)
                 );
     }
 
@@ -105,8 +106,7 @@ public class ProjectServiceImpl implements ProjectService {
     public boolean updateProject(ProjectDTO projectDTO) {
         Project oldProject = projectRepository.findById(projectDTO.getId())
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(String.format("Project with %oid does not exists",
-                                projectDTO.getId()))
+                        () -> new ResourceNotFoundException("Project", projectDTO.getId())
                 );
         Project newProject = copyProject(oldProject);
         if (!Objects.equals(oldProject.getName(), projectDTO.getName())) {
@@ -134,11 +134,12 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public boolean softDeleteProject(Long id) {
-        Project project = projectRepository.findById(id).orElse(null);
-        if (Objects.isNull(project)) {
-            throw new ResourceNotFoundException(String.format("Project with %oid does not exists", id));
-        }
+        Project project = projectRepository.findById(id)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Project", id)
+                );
         project.setActive(false);
+        project.getTasks().forEach(task -> task.setActive(false));
         projectRepository.save(project);
         return true;
     }
@@ -147,8 +148,7 @@ public class ProjectServiceImpl implements ProjectService {
     public boolean addTaskToProject(Long projectId, Long taskId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(String.format("Project with %oid does not exists",
-                                projectId))
+                        () -> new ResourceNotFoundException("Project", projectId)
                 );
         project.getTasks().add(taskService.getTaskById(taskId));
         return true;
@@ -157,6 +157,12 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public Page<ProjectDTO> getProjectsPage(Pageable pageable) {
         Page<Project> projects = projectRepository.findAll(pageable);
+        return projects.map(projectsListMapper::map);
+    }
+
+    @Override
+    public Page<ProjectDTO> getActiveProjectsPage(Pageable pageable) {
+        Page<Project> projects = projectRepository.findAllByActiveIsTrue(pageable);
         return projects.map(projectsListMapper::map);
     }
 }

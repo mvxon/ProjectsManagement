@@ -18,7 +18,7 @@ import javax.validation.Valid;
 public class ProjectController {
     private final ProjectService projectService;
 
-    @GetMapping("page")
+    @GetMapping
     public ResponseEntity<?> getProjectsPage(
             @RequestParam(defaultValue = "0") Integer pageNumber,
             @RequestParam(defaultValue = "3") Integer pageSize,
@@ -26,7 +26,7 @@ public class ProjectController {
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
         return new ResponseEntity<>(
-                projectService.getProjectsPage(PageRequest.of(
+                projectService.getActiveProjectsPage(PageRequest.of(
                                 pageNumber,
                                 pageSize,
                                 sortDir.equalsIgnoreCase("asc") ?
@@ -35,11 +35,6 @@ public class ProjectController {
                 ),
                 HttpStatus.OK
         );
-    }
-
-    @GetMapping
-    public ResponseEntity<?> getAllProjects() {
-        return ResponseEntity.ok(projectService.getAllProjects());
     }
 
 

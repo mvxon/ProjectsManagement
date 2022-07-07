@@ -11,5 +11,10 @@ public interface TaskRepository extends PagingAndSortingRepository<Task, Long> {
 
 
     @Query(value = "SELECT * FROM tasks WHERE project_id = :id", nativeQuery = true)
+    Page<Task> findAllByProjectIdAndActiveIsTrue(Pageable pageable, @Param("id") Long projectId);
+
+    @Query(value = "SELECT * FROM tasks WHERE project_id = :id", nativeQuery = true)
     Page<Task> findAllByProjectId(Pageable pageable, @Param("id") Long projectId);
+
+
 }
