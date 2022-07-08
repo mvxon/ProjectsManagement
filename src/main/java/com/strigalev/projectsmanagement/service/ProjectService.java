@@ -24,11 +24,11 @@ public interface ProjectService {
 
     boolean isProjectWithNameExists(String projectName);
 
-    boolean updateProject(ProjectDTO projectDTO);
+    void updateProject(ProjectDTO projectDTO);
 
-    boolean softDeleteProject(Long id);
+    void softDeleteProject(Long id);
 
-    boolean addTaskToProject(Long projectId, Long taskId);
+    void addTaskToProject(Long projectId, Long taskId);
 
     Page<ProjectDTO> getProjectsPage(Pageable pageable);
 

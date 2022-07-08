@@ -17,9 +17,11 @@ public interface TaskService {
 
     TaskDTO getTaskDtoById(Long id);
 
-    boolean updateTask(TaskDTO taskDTO);
+    void updateTask(TaskDTO taskDTO);
 
-    boolean softDeleteTask(Long id);
+    void softDeleteAllTasksByProjectId(Long projectId);
+
+    void softDeleteTask(Long id);
 
     Page<TaskDTO> getProjectTasksPage(Pageable pageable, Long projectId);
 

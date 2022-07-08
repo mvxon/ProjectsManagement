@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
+
+import static com.strigalev.projectsmanagement.util.MethodsUtil.getProjectNotExistsMessage;
+import static com.strigalev.projectsmanagement.util.MethodsUtil.getTaskNotExistsMessage;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +38,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Task getTaskById(Long id) {
         return taskRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("Task", id)
+                () -> new ResourceNotFoundException(getTaskNotExistsMessage(id))
         );
     }
 
@@ -45,38 +47,20 @@ public class TaskServiceImpl implements TaskService {
         return taskMapper.map(getTaskById(id));
     }
 
-    private Task copyTask(Task task) {
-        return Task.builder()
-                .id(task.getId())
-                .title(task.getTitle())
-                .description(task.getDescription())
-                .creationDate(task.getCreationDate())
-                .deadLineDate(task.getDeadLineDate())
-                .active(task.isActive())
-                .employees(task.getEmployees())
-                .build();
+    @Override
+    public void updateTask(TaskDTO taskDTO) {
+        Task savedTask = getTaskById(taskDTO.getId());
+        taskMapper.updateTaskFromDto(taskDTO, savedTask);
+        taskRepository.save(savedTask);
     }
 
     @Override
-    public boolean updateTask(TaskDTO taskDTO) {
-        Task oldTask = taskRepository.findById(taskDTO.getId()).orElseThrow(
-                () -> new ResourceNotFoundException("Task", taskDTO.getId())
-        );
-        Task newTask = copyTask(oldTask);
-        if (!Objects.equals(oldTask.getTitle(), taskDTO.getTitle())) {
-            newTask.setTitle(taskDTO.getTitle());
+    @Transactional
+    public void softDeleteAllTasksByProjectId(Long projectId) {
+        if (!projectService.isProjectWithIdExists(projectId)) {
+            throw new ResourceNotFoundException(getProjectNotExistsMessage(projectId));
         }
-        if (!Objects.equals(oldTask.getDescription(), taskDTO.getDescription())) {
-            newTask.setDescription(taskDTO.getDescription());
-        }
-        if (!Objects.equals(oldTask.getDeadLineDate(), LocalDate.parse(taskDTO.getDeadLineDate()))) {
-            newTask.setDeadLineDate(LocalDate.parse(taskDTO.getDeadLineDate()));
-        }
-        if (!oldTask.equals(newTask)) {
-            taskRepository.save(newTask);
-            return true;
-        }
-        return false;
+        taskRepository.setActiveFalseAllTasksByProjectId(projectId);
     }
 
     @Override
@@ -92,12 +76,10 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
-    public boolean softDeleteTask(Long id) {
-        Task task = taskRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("Task", id)
-        );
+    public void softDeleteTask(Long id) {
+        Task task = getTaskById(id);
         task.setActive(false);
-        return true;
+        taskRepository.save(task);
     }
 
     @Override

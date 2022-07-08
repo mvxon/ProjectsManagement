@@ -16,7 +16,8 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
+
+import static com.strigalev.projectsmanagement.util.MethodsUtil.getProjectNotExistsMessage;
 
 
 @Service
@@ -42,7 +43,7 @@ public class ProjectServiceImpl implements ProjectService {
     public Project getProjectById(Long id) {
         return projectRepository.findById(id)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException("Project", id)
+                        () -> new ResourceNotFoundException(getProjectNotExistsMessage(id))
                 );
     }
 
@@ -65,7 +66,6 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public List<ProjectDTO> getAllProjects() {
-        projectRepository.findAll();
         return projectsListMapper.map(projectRepository.findAll());
     }
 
@@ -82,85 +82,45 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public boolean isProjectWithNameExists(String projectName) {
         return projectRepository.existsByName(projectName);
     }
 
-    private Project copyProject(Project project) {
-        return Project.builder()
-                .id(project.getId())
-                .name(project.getName())
-                .creationDate(project.getCreationDate())
-                .customer(project.getCustomer())
-                .deadLineDate(project.getDeadLineDate())
-                .description(project.getDescription())
-                .title(project.getTitle())
-                .employees(project.getEmployees())
-                .tasks(project.getTasks())
-                .active(project.isActive())
-                .build();
+    @Override
+    @Transactional
+    public void updateProject(ProjectDTO projectDTO) {
+        Project savedProject = getProjectById(projectDTO.getId());
+        projectMapper.updateProjectFromDto(projectDTO, savedProject);
+        projectRepository.save(savedProject);
     }
 
     @Override
     @Transactional
-    public boolean updateProject(ProjectDTO projectDTO) {
-        Project oldProject = projectRepository.findById(projectDTO.getId())
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Project", projectDTO.getId())
-                );
-        Project newProject = copyProject(oldProject);
-        if (!Objects.equals(oldProject.getName(), projectDTO.getName())) {
-            newProject.setName(projectDTO.getName());
-        }
-        if (!Objects.equals(oldProject.getTitle(), projectDTO.getTitle())) {
-            newProject.setTitle(projectDTO.getTitle());
-        }
-        if (!Objects.equals(oldProject.getDescription(), projectDTO.getDescription())) {
-            newProject.setDescription(projectDTO.getDescription());
-        }
-        if (!Objects.equals(oldProject.getCustomer(), projectDTO.getCustomer())) {
-            newProject.setCustomer(projectDTO.getCustomer());
-        }
-        if (!Objects.equals(oldProject.getDeadLineDate(), LocalDate.parse(projectDTO.getDeadLineDate()))) {
-            newProject.setDeadLineDate(LocalDate.parse(projectDTO.getDeadLineDate()));
-        }
-        if (!Objects.equals(oldProject, newProject)) {
-            projectRepository.save(newProject);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    @Transactional
-    public boolean softDeleteProject(Long id) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Project", id)
-                );
+    public void softDeleteProject(Long id) {
+        Project project = getProjectById(id);
         project.setActive(false);
-        project.getTasks().forEach(task -> task.setActive(false));
+        taskService.softDeleteAllTasksByProjectId(id);
         projectRepository.save(project);
-        return true;
     }
 
     @Override
-    public boolean addTaskToProject(Long projectId, Long taskId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Project", projectId)
-                );
+    @Transactional
+    public void addTaskToProject(Long projectId, Long taskId) {
+        Project project = getProjectById(projectId);
         project.getTasks().add(taskService.getTaskById(taskId));
-        return true;
+        projectRepository.save(project);
     }
 
     @Override
+    @Transactional
     public Page<ProjectDTO> getProjectsPage(Pageable pageable) {
         Page<Project> projects = projectRepository.findAll(pageable);
         return projects.map(projectsListMapper::map);
     }
 
     @Override
+    @Transactional
     public Page<ProjectDTO> getActiveProjectsPage(Pageable pageable) {
         Page<Project> projects = projectRepository.findAllByActiveIsTrue(pageable);
         return projects.map(projectsListMapper::map);

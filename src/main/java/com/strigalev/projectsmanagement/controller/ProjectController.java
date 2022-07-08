@@ -4,8 +4,7 @@ import com.strigalev.projectsmanagement.dto.ProjectDTO;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.util.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,26 +18,11 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @GetMapping
-    public ResponseEntity<?> getProjectsPage(
-            @RequestParam(defaultValue = "0") Integer pageNumber,
-            @RequestParam(defaultValue = "3") Integer pageSize,
-            @RequestParam(defaultValue = "creationDate") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir
-    ) {
-        return new ResponseEntity<>(
-                projectService.getActiveProjectsPage(PageRequest.of(
-                                pageNumber,
-                                pageSize,
-                                sortDir.equalsIgnoreCase("asc") ?
-                                        Sort.by(sortBy).ascending() : Sort.by(sortBy).descending()
-                        )
-                ),
-                HttpStatus.OK
-        );
+    public ResponseEntity<?> getProjectsPage(Pageable pageable) {
+        return new ResponseEntity<>(projectService.getActiveProjectsPage(pageable), HttpStatus.OK);
     }
 
-
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getProjectById(@PathVariable Long id) {
         return ResponseEntity.ok(projectService.getProjectDtoById(id));
     }
@@ -53,16 +37,16 @@ public class ProjectController {
         );
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProject(@PathVariable Long id) {
-        return ResponseEntity.ok(projectService.softDeleteProject(id));
+        projectService.softDeleteProject(id);
+        return ResponseEntity.ok(new ApiResponse());
     }
 
-    @PutMapping("{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<?> updateProject(@PathVariable Long id, @RequestBody @Valid ProjectDTO projectDTO) {
-        ApiResponse apiResponse = new ApiResponse();
         projectDTO.setId(id);
-        apiResponse.setMessage("updated : " + projectService.updateProject(projectDTO));
-        return ResponseEntity.ok(apiResponse);
+        projectService.updateProject(projectDTO);
+        return ResponseEntity.ok(new ApiResponse());
     }
 }
