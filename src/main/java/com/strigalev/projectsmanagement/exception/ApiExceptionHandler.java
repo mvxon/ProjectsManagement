@@ -10,6 +10,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import static com.strigalev.projectsmanagement.util.MethodsUtil.getBindingResultErrors;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
@@ -40,7 +41,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     protected ResponseEntity<?> handleResourceNotFound(ResourceNotFoundException ex) {
-        HttpStatus status = HttpStatus.NOT_FOUND;
+        HttpStatus status = NOT_FOUND;
         return new ResponseEntity<>(ApiException.builder()
                 .message(ex.getMessage())
                 .status(status)

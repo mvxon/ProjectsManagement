@@ -4,7 +4,7 @@ spring:
       sort:
         sort-parameter: creation_date
       pageable:
-        default-page-size: 3
+        default-page-size: 5
         max-page-size: 20
   jpa:
     hibernate:

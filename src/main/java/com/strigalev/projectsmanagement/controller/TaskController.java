@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 
 import static com.strigalev.projectsmanagement.util.MethodsUtil.getProjectNotExistsMessage;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class TaskController {
         if (!projectService.isProjectWithIdExists(projectId)) {
             throw new ResourceNotFoundException(getProjectNotExistsMessage(projectId));
         }
-        return new ResponseEntity<>(pageable, HttpStatus.OK);
+        return new ResponseEntity<>(pageable, OK);
     }
 
     @PostMapping("/{projectId}")
@@ -43,10 +45,11 @@ public class TaskController {
         }
         Long taskId = taskService.createTask(taskDTO);
         projectService.addTaskToProject(projectId, taskId);
-        return ResponseEntity.ok(
+        return new ResponseEntity<>(
                 ApiResponse.builder()
                         .objectId(taskId)
-                        .build()
+                        .build(),
+                CREATED
         );
     }
 
