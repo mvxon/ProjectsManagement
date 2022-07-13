@@ -2,7 +2,7 @@ package com.strigalev.projectsmanagement.controller;
 
 import com.strigalev.projectsmanagement.dto.ProjectDTO;
 import com.strigalev.projectsmanagement.service.ProjectService;
-import com.strigalev.projectsmanagement.util.ApiResponse;
+import com.strigalev.projectsmanagement.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;

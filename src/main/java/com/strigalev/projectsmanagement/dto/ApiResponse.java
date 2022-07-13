@@ -1,4 +1,4 @@
-package com.strigalev.projectsmanagement.util;
+package com.strigalev.projectsmanagement.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

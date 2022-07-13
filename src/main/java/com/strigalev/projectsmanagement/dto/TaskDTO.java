@@ -1,7 +1,6 @@
 package com.strigalev.projectsmanagement.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.strigalev.projectsmanagement.domain.Employee;
 import com.strigalev.projectsmanagement.validation.annotation.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -35,4 +33,7 @@ public class TaskDTO {
     @Date
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String deadLineDate;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean active;
 }

@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 public interface TaskRepository extends PagingAndSortingRepository<Task, Long> {
 
 
-    @Query(value = "SELECT * FROM tasks WHERE project_id = :id", nativeQuery = true)
+    @Query(value = "SELECT * FROM tasks WHERE project_id = :id AND active = true", nativeQuery = true)
     Page<Task> findAllByProjectIdAndActiveIsTrue(Pageable pageable, @Param("id") Long projectId);
 
     @Query(value = "SELECT * FROM tasks WHERE project_id = :id", nativeQuery = true)

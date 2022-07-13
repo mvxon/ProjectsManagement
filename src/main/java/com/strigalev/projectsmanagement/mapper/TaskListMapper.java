@@ -9,7 +9,7 @@ import org.mapstruct.Mappings;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface TasksListMapper {
+public interface TaskListMapper {
 
     @Mappings({
             @Mapping(target = "description", ignore = true),

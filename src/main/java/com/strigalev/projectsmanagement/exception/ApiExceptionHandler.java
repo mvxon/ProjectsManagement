@@ -45,6 +45,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(ApiException.builder()
                 .message(ex.getMessage())
                 .status(status)
-                .build(), status);
+                .build(),
+                status);
     }
 }

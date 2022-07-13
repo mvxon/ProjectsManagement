@@ -9,14 +9,13 @@ import org.mapstruct.Mappings;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
-public interface ProjectsListMapper {
+public interface ProjectListMapper {
 
     @Mappings({
             @Mapping(target = "title", ignore = true),
             @Mapping(target = "description", ignore = true),
             @Mapping(target = "deadLineDate", ignore = true),
             @Mapping(target = "creationDate", ignore = true),
-
     })
     ProjectDTO map(Project project);
 

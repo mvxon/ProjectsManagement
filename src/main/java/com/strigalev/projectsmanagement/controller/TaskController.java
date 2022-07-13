@@ -4,10 +4,9 @@ import com.strigalev.projectsmanagement.dto.TaskDTO;
 import com.strigalev.projectsmanagement.exception.ResourceNotFoundException;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.service.TaskService;
-import com.strigalev.projectsmanagement.util.ApiResponse;
+import com.strigalev.projectsmanagement.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +14,6 @@ import javax.validation.Valid;
 
 import static com.strigalev.projectsmanagement.util.MethodsUtil.getProjectNotExistsMessage;
 import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,11 +28,11 @@ public class TaskController {
     }
 
     @GetMapping("/project/{projectId}")
-    public ResponseEntity<?> getTasksPage(@PathVariable Long projectId, Pageable pageable) {
+    public ResponseEntity<?> getProjectTasksPage(@PathVariable Long projectId, Pageable pageable) {
         if (!projectService.isProjectWithIdExists(projectId)) {
             throw new ResourceNotFoundException(getProjectNotExistsMessage(projectId));
         }
-        return new ResponseEntity<>(pageable, OK);
+        return ResponseEntity.ok(taskService.getProjectActiveTasksPage(pageable, projectId));
     }
 
     @PostMapping("/{projectId}")

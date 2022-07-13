@@ -1,12 +1,13 @@
 package com.strigalev.projectsmanagement.util;
 
-import org.springframework.stereotype.Component;
+import lombok.experimental.UtilityClass;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 
-@Component
+@UtilityClass
 public class MethodsUtil {
-    public static String getBindingResultErrors(BindingResult bindingResult) {
+    public String getBindingResultErrors(@NotNull BindingResult bindingResult) {
         if (!bindingResult.hasErrors()) {
             return null;
         }
@@ -21,11 +22,11 @@ public class MethodsUtil {
         return errors.toString();
     }
 
-    public static String getProjectNotExistsMessage(Long projectId) {
+    public String getProjectNotExistsMessage(Long projectId) {
         return String.format("Project with %oid does not exists", projectId);
     }
 
-    public static String getTaskNotExistsMessage(Long taskId) {
+    public String getTaskNotExistsMessage(Long taskId) {
         return String.format("Task with %oid does not exists", taskId);
     }
 

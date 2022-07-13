@@ -4,7 +4,7 @@ import com.strigalev.projectsmanagement.domain.Project;
 import com.strigalev.projectsmanagement.dto.ProjectDTO;
 import com.strigalev.projectsmanagement.exception.ResourceNotFoundException;
 import com.strigalev.projectsmanagement.mapper.ProjectMapper;
-import com.strigalev.projectsmanagement.mapper.ProjectsListMapper;
+import com.strigalev.projectsmanagement.mapper.ProjectListMapper;
 import com.strigalev.projectsmanagement.repository.ProjectRepository;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.service.TaskService;
@@ -24,17 +24,17 @@ import static com.strigalev.projectsmanagement.util.MethodsUtil.getProjectNotExi
 public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
-    private final ProjectsListMapper projectsListMapper;
+    private final ProjectListMapper projectListMapper;
     private final TaskService taskService;
 
     public ProjectServiceImpl(ProjectRepository projectRepository,
                               ProjectMapper projectMapper,
-                              ProjectsListMapper projectsListMapper,
+                              ProjectListMapper projectListMapper,
                               @Lazy TaskService taskService
     ) {
         this.projectRepository = projectRepository;
         this.projectMapper = projectMapper;
-        this.projectsListMapper = projectsListMapper;
+        this.projectListMapper = projectListMapper;
         this.taskService = taskService;
     }
 
@@ -66,7 +66,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public List<ProjectDTO> getAllProjects() {
-        return projectsListMapper.map(projectRepository.findAll());
+        return projectListMapper.map(projectRepository.findAll());
     }
 
     @Override
@@ -116,13 +116,13 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     public Page<ProjectDTO> getProjectsPage(Pageable pageable) {
         Page<Project> projects = projectRepository.findAll(pageable);
-        return projects.map(projectsListMapper::map);
+        return projects.map(projectListMapper::map);
     }
 
     @Override
     @Transactional
     public Page<ProjectDTO> getActiveProjectsPage(Pageable pageable) {
         Page<Project> projects = projectRepository.findAllByActiveIsTrue(pageable);
-        return projects.map(projectsListMapper::map);
+        return projects.map(projectListMapper::map);
     }
 }

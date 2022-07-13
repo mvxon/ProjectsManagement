@@ -1,10 +1,12 @@
-package com.strigalev.projectsmanagement.service;
+package com.strigalev.projectsmanagement.unit.service;
 
 import com.strigalev.projectsmanagement.domain.Project;
 import com.strigalev.projectsmanagement.domain.Task;
 import com.strigalev.projectsmanagement.dto.ProjectDTO;
 import com.strigalev.projectsmanagement.mapper.ProjectMapper;
 import com.strigalev.projectsmanagement.repository.ProjectRepository;
+import com.strigalev.projectsmanagement.service.ProjectService;
+import com.strigalev.projectsmanagement.service.TaskService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;

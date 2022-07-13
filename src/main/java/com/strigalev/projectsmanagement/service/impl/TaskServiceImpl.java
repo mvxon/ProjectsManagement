@@ -4,8 +4,8 @@ import com.strigalev.projectsmanagement.domain.Project;
 import com.strigalev.projectsmanagement.domain.Task;
 import com.strigalev.projectsmanagement.dto.TaskDTO;
 import com.strigalev.projectsmanagement.exception.ResourceNotFoundException;
+import com.strigalev.projectsmanagement.mapper.TaskListMapper;
 import com.strigalev.projectsmanagement.mapper.TaskMapper;
-import com.strigalev.projectsmanagement.mapper.TasksListMapper;
 import com.strigalev.projectsmanagement.repository.TaskRepository;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.service.TaskService;
@@ -25,14 +25,14 @@ import static com.strigalev.projectsmanagement.util.MethodsUtil.getTaskNotExists
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
     private final TaskMapper taskMapper;
-    private final TasksListMapper tasksListMapper;
+    private final TaskListMapper taskListMapper;
     private final TaskRepository taskRepository;
     private final ProjectService projectService;
 
     @Override
     public List<TaskDTO> getAllTasksByProjectId(Long projectId) {
         Project project = projectService.getProjectById(projectId);
-        return tasksListMapper.map(project.getTasks());
+        return taskListMapper.map(project.getTasks());
     }
 
     @Override
@@ -85,13 +85,13 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Page<TaskDTO> getProjectTasksPage(Pageable pageable, Long projectId) {
         Page<Task> tasks = taskRepository.findAllByProjectId(pageable, projectId);
-        return tasks.map(tasksListMapper::map);
+        return tasks.map(taskListMapper::map);
     }
 
     @Override
     public Page<TaskDTO> getProjectActiveTasksPage(Pageable pageable, Long projectId) {
         Page<Task> tasks = taskRepository.findAllByProjectIdAndActiveIsTrue(pageable, projectId);
-        return tasks.map(tasksListMapper::map);
+        return tasks.map(taskListMapper::map);
     }
 
 }

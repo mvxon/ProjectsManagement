@@ -1,8 +1,6 @@
-package com.strigalev.projectsmanagement.controller;
+package com.strigalev.projectsmanagement.unit.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.strigalev.projectsmanagement.dto.ProjectDTO;
 import com.strigalev.projectsmanagement.dto.TaskDTO;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.service.TaskService;
@@ -24,13 +22,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class TaskControllerTest {
-    private static final String URL = "/api/v1/tasks";
+    private static final String PATH = "/api/v1/tasks";
     private static final Long ID = 1L;
     private static final String TITLE = "Asd asd asd";
     private static final String DESC = "Asd asd asd asd asd";
     private static final String DEAD_LINE_DATE = "2025-12-15";
     private static final String CREATION_DATE = "2022-07-7";
-    private static final TaskDTO task = TaskDTO.builder()
+    private static final TaskDTO TASK = TaskDTO.builder()
             .id(ID)
             .title(TITLE)
             .deadLineDate(DEAD_LINE_DATE)
@@ -47,9 +45,9 @@ class TaskControllerTest {
 
     @Test
     void getTaskById() throws Exception {
-        when(taskService.getTaskDtoById(ID)).thenReturn(task);
+        when(taskService.getTaskDtoById(ID)).thenReturn(TASK);
 
-        mockMvc.perform(MockMvcRequestBuilders.get(URL + "/" + ID))
+        mockMvc.perform(MockMvcRequestBuilders.get(PATH + "/" + ID))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(ID))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.title").value(TITLE))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.description").value(DESC))
@@ -60,10 +58,10 @@ class TaskControllerTest {
     @Test
     void createTaskInProject() throws Exception {
         when(projectService.isProjectWithIdExists(ID)).thenReturn(true);
-        when(taskService.createTask(task)).thenReturn(ID);
+        when(taskService.createTask(TASK)).thenReturn(ID);
 
-        mockMvc.perform(MockMvcRequestBuilders.post(URL + "/" + ID)
-                        .content(new ObjectMapper().writeValueAsString(task))
+        mockMvc.perform(MockMvcRequestBuilders.post(PATH + "/" + ID)
+                        .content(new ObjectMapper().writeValueAsString(TASK))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.objectId").value(ID));
@@ -74,37 +72,55 @@ class TaskControllerTest {
     void createTaskInProject_whenProjectNotExists() throws Exception {
         when(projectService.isProjectWithIdExists(ID)).thenReturn(false);
 
-        mockMvc.perform(MockMvcRequestBuilders.post(URL + "/" + ID)
-                        .content(new ObjectMapper().writeValueAsString(task))
+        mockMvc.perform(MockMvcRequestBuilders.post(PATH + "/" + ID)
+                        .content(new ObjectMapper().writeValueAsString(TASK))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.message").value(getProjectNotExistsMessage(ID)));
     }
 
     @Test
-    void createTask_whenNotValid() throws Exception {
-        when(taskService.createTask(task)).thenReturn(ID);
+    void createTask_whenInvalidRequestBody() throws Exception {
+        when(taskService.createTask(TASK)).thenReturn(ID);
 
-        mockMvc.perform(MockMvcRequestBuilders.post(URL + "/" + ID)
+        mockMvc.perform(MockMvcRequestBuilders.post(PATH + "/" + ID)
                         .content(new ObjectMapper().writeValueAsString(new TaskDTO()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.message").exists())
                 .andExpect(status().isBadRequest());
     }
 
+
+    @Test
+    void getProjectTasksPage() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get(PATH + "/" + ID))
+                .andExpect(status().isOk());
+    }
+
+
     @Test
     void deleteTask() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.delete(URL + "/" + ID))
+        mockMvc.perform(MockMvcRequestBuilders.delete(PATH + "/" + ID))
                 .andExpect(status().isOk());
         verify(taskService).softDeleteTask(ID);
     }
 
     @Test
     void updateTask() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.put(URL + "/" + ID)
-                        .content(new ObjectMapper().writeValueAsString(task))
+        mockMvc.perform(MockMvcRequestBuilders.put(PATH + "/" + ID)
+                        .content(new ObjectMapper().writeValueAsString(TASK))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(taskService).updateTask(task);
+        verify(taskService).updateTask(TASK);
     }
+
+    @Test
+    void updateTask_whenInvalidRequestBody() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.put(PATH + "/" + ID)
+                        .content(new ObjectMapper().writeValueAsString(new TaskDTO()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").exists())
+                .andExpect(status().isBadRequest());
+    }
+
 }
