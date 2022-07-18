@@ -15,7 +15,7 @@ public interface ProjectListMapper {
             @Mapping(target = "title", ignore = true),
             @Mapping(target = "description", ignore = true),
             @Mapping(target = "deadLineDate", ignore = true),
-            @Mapping(target = "creationDate", ignore = true),
+            @Mapping(target = "creationDate", ignore = true)
     })
     ProjectDTO map(Project project);
 

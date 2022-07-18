@@ -29,7 +29,6 @@ public class ProjectIntegrationTest extends IntegrationTestBase {
             .description("Description description")
             .customer("Oracle")
             .deadLineDate("2023-12-20")
-            .active(true)
             .build();
 
     @Autowired
@@ -64,7 +63,7 @@ public class ProjectIntegrationTest extends IntegrationTestBase {
 
         assertEquals(projectsCount + 1, projectRepository.count());
         Project project = projectService.getProjectById(projectsCount + 1);
-        assertThat(project).isEqualToIgnoringNullFields(projectMapper.map(PROJECT_DTO));
+        assertThat(projectMapper.map(project)).isEqualToIgnoringNullFields(PROJECT_DTO);
     }
 
 

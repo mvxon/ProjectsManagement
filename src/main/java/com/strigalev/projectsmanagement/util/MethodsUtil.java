@@ -9,7 +9,7 @@ import org.springframework.validation.FieldError;
 public class MethodsUtil {
     public String getBindingResultErrors(@NotNull BindingResult bindingResult) {
         if (!bindingResult.hasErrors()) {
-            return null;
+            return "";
         }
         StringBuilder errors = new StringBuilder();
         for (FieldError fieldError : bindingResult.getFieldErrors()) {

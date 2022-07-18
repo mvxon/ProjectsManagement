@@ -30,7 +30,7 @@ class ProjectControllerTest {
     private static final String CUSTOMER = "FEAR";
     private static final String DEAD_LINE_DATE = "2025-12-15";
     private static final String CREATION_DATE = "2022-07-7";
-    private static final ProjectDTO PROJECT = ProjectDTO.builder()
+    private static final ProjectDTO PROJECT_DTO = ProjectDTO.builder()
             .name(NAME)
             .title(TITLE)
             .description(DESC)
@@ -47,7 +47,7 @@ class ProjectControllerTest {
 
     @Test
     void getProjectById() throws Exception {
-        when(projectService.getProjectDtoById(ID)).thenReturn(PROJECT);
+        when(projectService.getProjectDtoById(ID)).thenReturn(PROJECT_DTO);
 
         mockMvc.perform(MockMvcRequestBuilders.get(PATH + "/" + ID))
                 .andExpect(jsonPath("$.id").value(ID))
@@ -62,10 +62,10 @@ class ProjectControllerTest {
 
     @Test
     void createProject() throws Exception {
-        when(projectService.createProject(PROJECT)).thenReturn(ID);
+        when(projectService.createProject(PROJECT_DTO)).thenReturn(ID);
 
         mockMvc.perform(post(PATH)
-                        .content(new ObjectMapper().writeValueAsString(PROJECT))
+                        .content(new ObjectMapper().writeValueAsString(PROJECT_DTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.objectId").value(ID));
@@ -73,7 +73,7 @@ class ProjectControllerTest {
 
     @Test
     void createProject_whenInvalidRequestBody() throws Exception {
-        when(projectService.createProject(PROJECT)).thenReturn(ID);
+        when(projectService.createProject(PROJECT_DTO)).thenReturn(ID);
 
         mockMvc.perform(post(PATH)
                         .content(new ObjectMapper().writeValueAsString(new ProjectDTO()))
@@ -84,14 +84,14 @@ class ProjectControllerTest {
 
     @Test
     void createProject_whenAlreadyExistsWithName() throws Exception {
-        when(projectService.isProjectWithNameExists(PROJECT.getName())).thenReturn(true);
+        when(projectService.isProjectWithNameExists(PROJECT_DTO.getName())).thenReturn(true);
 
         mockMvc.perform(post(PATH)
-                        .content(new ObjectMapper().writeValueAsString(PROJECT))
+                        .content(new ObjectMapper().writeValueAsString(PROJECT_DTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("name : " +
-                        String.format("Project with name %s already exists", PROJECT.getName())));
+                        String.format("Project with name %s already exists", PROJECT_DTO.getName())));
     }
 
     @Test
@@ -111,10 +111,10 @@ class ProjectControllerTest {
     @Test
     void updateProject() throws Exception {
         mockMvc.perform(put(PATH + "/" + ID)
-                        .content(new ObjectMapper().writeValueAsString(PROJECT))
+                        .content(new ObjectMapper().writeValueAsString(PROJECT_DTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(projectService).updateProject(PROJECT);
+        verify(projectService).updateProject(PROJECT_DTO);
     }
 
     @Test
@@ -128,15 +128,15 @@ class ProjectControllerTest {
 
     @Test
     void updateProject_whenAlreadyExistsWithName() throws Exception {
-        when(projectService.isProjectWithNameExists(PROJECT.getName())).thenReturn(true);
+        when(projectService.isProjectWithNameExists(PROJECT_DTO.getName())).thenReturn(true);
 
         mockMvc.perform(put(PATH + "/" + ID)
-                        .content(new ObjectMapper().writeValueAsString(PROJECT))
+                        .content(new ObjectMapper().writeValueAsString(PROJECT_DTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(
                         jsonPath("$.message").value("name : " +
-                                String.format("Project with name %s already exists", PROJECT.getName()))
+                                String.format("Project with name %s already exists", PROJECT_DTO.getName()))
                 );
     }
 

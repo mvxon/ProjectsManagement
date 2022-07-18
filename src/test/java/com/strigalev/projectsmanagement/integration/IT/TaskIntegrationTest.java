@@ -29,7 +29,6 @@ public class TaskIntegrationTest extends IntegrationTestBase {
             .title("Developing")
             .description("Description description")
             .deadLineDate("2023-12-20")
-            .active(true)
             .build();
 
     @Autowired
@@ -70,7 +69,7 @@ public class TaskIntegrationTest extends IntegrationTestBase {
         assertEquals(oldTasksCount + 1, taskRepository.count());
 
         Task task = taskService.getTaskById(oldTasksCount + 1);
-        assertThat(task).isEqualToIgnoringNullFields(taskMapper.map(TASK_DTO));
+        assertThat(taskMapper.map(task)).isEqualToIgnoringNullFields(TASK_DTO);
     }
 
     @Test

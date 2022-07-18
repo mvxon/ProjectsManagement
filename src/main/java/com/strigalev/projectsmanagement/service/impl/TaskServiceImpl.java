@@ -83,14 +83,20 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Page<TaskDTO> getProjectTasksPage(Pageable pageable, Long projectId) {
+    public Page<TaskDTO> getAllProjectTasksPage(Pageable pageable, Long projectId) {
         Page<Task> tasks = taskRepository.findAllByProjectId(pageable, projectId);
+        if (tasks.getContent().isEmpty()) {
+            throw new ResourceNotFoundException("Page not found");
+        }
         return tasks.map(taskListMapper::map);
     }
 
     @Override
     public Page<TaskDTO> getProjectActiveTasksPage(Pageable pageable, Long projectId) {
         Page<Task> tasks = taskRepository.findAllByProjectIdAndActiveIsTrue(pageable, projectId);
+        if (tasks.getContent().isEmpty()) {
+            throw new ResourceNotFoundException("Page not found");
+        }
         return tasks.map(taskListMapper::map);
     }
 

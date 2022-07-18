@@ -30,7 +30,7 @@ public interface ProjectService {
 
     void addTaskToProject(Long projectId, Long taskId);
 
-    Page<ProjectDTO> getProjectsPage(Pageable pageable);
+    Page<ProjectDTO> getAllProjectsPage(Pageable pageable);
 
     Page<ProjectDTO> getActiveProjectsPage(Pageable pageable);
 

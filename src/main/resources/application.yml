@@ -17,6 +17,16 @@ spring:
     baseline-on-migrate: true
 
 
+application:
+  title: Projects Management Application
+  description: Application for projects and tasks managing
+  version: 1.0
+
+
+
+
+
+
 
 
 

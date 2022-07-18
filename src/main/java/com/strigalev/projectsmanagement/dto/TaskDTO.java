@@ -33,7 +33,4 @@ public class TaskDTO {
     @Date
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String deadLineDate;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Boolean active;
 }

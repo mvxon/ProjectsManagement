@@ -19,6 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
 @SpringBootTest
 @AutoConfigureMockMvc
 class TaskControllerTest {
@@ -28,7 +29,7 @@ class TaskControllerTest {
     private static final String DESC = "Asd asd asd asd asd";
     private static final String DEAD_LINE_DATE = "2025-12-15";
     private static final String CREATION_DATE = "2022-07-7";
-    private static final TaskDTO TASK = TaskDTO.builder()
+    private static final TaskDTO TASK_DTO = TaskDTO.builder()
             .id(ID)
             .title(TITLE)
             .deadLineDate(DEAD_LINE_DATE)
@@ -45,7 +46,7 @@ class TaskControllerTest {
 
     @Test
     void getTaskById() throws Exception {
-        when(taskService.getTaskDtoById(ID)).thenReturn(TASK);
+        when(taskService.getTaskDtoById(ID)).thenReturn(TASK_DTO);
 
         mockMvc.perform(MockMvcRequestBuilders.get(PATH + "/" + ID))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(ID))
@@ -58,10 +59,10 @@ class TaskControllerTest {
     @Test
     void createTaskInProject() throws Exception {
         when(projectService.isProjectWithIdExists(ID)).thenReturn(true);
-        when(taskService.createTask(TASK)).thenReturn(ID);
+        when(taskService.createTask(TASK_DTO)).thenReturn(ID);
 
         mockMvc.perform(MockMvcRequestBuilders.post(PATH + "/" + ID)
-                        .content(new ObjectMapper().writeValueAsString(TASK))
+                        .content(new ObjectMapper().writeValueAsString(TASK_DTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.objectId").value(ID));
@@ -73,7 +74,7 @@ class TaskControllerTest {
         when(projectService.isProjectWithIdExists(ID)).thenReturn(false);
 
         mockMvc.perform(MockMvcRequestBuilders.post(PATH + "/" + ID)
-                        .content(new ObjectMapper().writeValueAsString(TASK))
+                        .content(new ObjectMapper().writeValueAsString(TASK_DTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.message").value(getProjectNotExistsMessage(ID)));
@@ -81,7 +82,7 @@ class TaskControllerTest {
 
     @Test
     void createTask_whenInvalidRequestBody() throws Exception {
-        when(taskService.createTask(TASK)).thenReturn(ID);
+        when(taskService.createTask(TASK_DTO)).thenReturn(ID);
 
         mockMvc.perform(MockMvcRequestBuilders.post(PATH + "/" + ID)
                         .content(new ObjectMapper().writeValueAsString(new TaskDTO()))
@@ -108,10 +109,10 @@ class TaskControllerTest {
     @Test
     void updateTask() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.put(PATH + "/" + ID)
-                        .content(new ObjectMapper().writeValueAsString(TASK))
+                        .content(new ObjectMapper().writeValueAsString(TASK_DTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(taskService).updateTask(TASK);
+        verify(taskService).updateTask(TASK_DTO);
     }
 
     @Test

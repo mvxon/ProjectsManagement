@@ -114,8 +114,11 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public Page<ProjectDTO> getProjectsPage(Pageable pageable) {
+    public Page<ProjectDTO> getAllProjectsPage(Pageable pageable) {
         Page<Project> projects = projectRepository.findAll(pageable);
+        if(projects.getContent().isEmpty()) {
+            throw new ResourceNotFoundException("Page not found");
+        }
         return projects.map(projectListMapper::map);
     }
 
@@ -123,6 +126,9 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     public Page<ProjectDTO> getActiveProjectsPage(Pageable pageable) {
         Page<Project> projects = projectRepository.findAllByActiveIsTrue(pageable);
+        if(projects.getContent().isEmpty()) {
+            throw new ResourceNotFoundException("Page not found");
+        }
         return projects.map(projectListMapper::map);
     }
 }

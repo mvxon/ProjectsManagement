@@ -16,6 +16,7 @@ public interface TaskMapper {
     List<TaskDTO> map(List<Task> tasks);
 
     @Mapping(target = "employees", ignore = true)
+    @Mapping(target = "active", ignore = true)
     Task map(TaskDTO taskDTO);
 
     @Mappings({

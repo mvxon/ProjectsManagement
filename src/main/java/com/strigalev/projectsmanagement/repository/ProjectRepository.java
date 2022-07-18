@@ -6,7 +6,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface ProjectRepository extends PagingAndSortingRepository<Project, Long> {
 
@@ -15,6 +14,4 @@ public interface ProjectRepository extends PagingAndSortingRepository<Project, L
     Page<Project> findAllByActiveIsTrue(Pageable pageable);
 
     List<Project> findAll();
-
-    Optional<Project> findByName(String name);
 }
