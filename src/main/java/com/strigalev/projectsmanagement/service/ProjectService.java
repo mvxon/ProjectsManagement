@@ -1,19 +1,20 @@
 package com.strigalev.projectsmanagement.service;
 
 import com.strigalev.projectsmanagement.domain.Project;
-import com.strigalev.projectsmanagement.domain.Task;
 import com.strigalev.projectsmanagement.dto.ProjectDTO;
-import com.strigalev.projectsmanagement.dto.TaskDTO;
-import org.springframework.validation.BindingResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Map;
+
 
 public interface ProjectService {
 
     Project getProjectById(Long id);
 
-    Map<String, ?> createProject(ProjectDTO projectDTO, BindingResult bindingResult);
+    ProjectDTO getProjectDtoById(Long id);
+
+    Long createProject(ProjectDTO projectDTO);
 
     List<ProjectDTO> getAllProjects();
 
@@ -23,11 +24,14 @@ public interface ProjectService {
 
     boolean isProjectWithNameExists(String projectName);
 
-    Map<String, ?> updateProject(ProjectDTO projectDTO, BindingResult bindingResult);
+    void updateProject(ProjectDTO projectDTO);
 
-    Map<String, ?> softDeleteProject(Long id);
+    void softDeleteProject(Long id);
 
-    Map<String, ?> addTaskToProject(Long projectId, Long taskId);
+    void addTaskToProject(Long projectId, Long taskId);
 
+    Page<ProjectDTO> getAllProjectsPage(Pageable pageable);
+
+    Page<ProjectDTO> getActiveProjectsPage(Pageable pageable);
 
 }

@@ -3,123 +3,101 @@ package com.strigalev.projectsmanagement.service.impl;
 import com.strigalev.projectsmanagement.domain.Project;
 import com.strigalev.projectsmanagement.domain.Task;
 import com.strigalev.projectsmanagement.dto.TaskDTO;
+import com.strigalev.projectsmanagement.exception.ResourceNotFoundException;
+import com.strigalev.projectsmanagement.mapper.TaskListMapper;
 import com.strigalev.projectsmanagement.mapper.TaskMapper;
 import com.strigalev.projectsmanagement.repository.TaskRepository;
 import com.strigalev.projectsmanagement.service.ProjectService;
 import com.strigalev.projectsmanagement.service.TaskService;
-import com.strigalev.projectsmanagement.validation.GetErrorsAction;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindingResult;
 
 import javax.transaction.Transactional;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+
+import static com.strigalev.projectsmanagement.util.MethodsUtil.getProjectNotExistsMessage;
+import static com.strigalev.projectsmanagement.util.MethodsUtil.getTaskNotExistsMessage;
 
 @Service
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
     private final TaskMapper taskMapper;
+    private final TaskListMapper taskListMapper;
     private final TaskRepository taskRepository;
     private final ProjectService projectService;
-    private final GetErrorsAction getErrorsAction;
 
     @Override
     public List<TaskDTO> getAllTasksByProjectId(Long projectId) {
         Project project = projectService.getProjectById(projectId);
-        if (project == null) {
-            return null;
-        }
-        return taskMapper.map(project.getTasks());
+        return taskListMapper.map(project.getTasks());
     }
 
     @Override
     public Task getTaskById(Long id) {
-        return taskRepository.findById(id).orElse(null);
-    }
-
-    private Task copyTask(Task task) {
-        return Task.builder()
-                .id(task.getId())
-                .title(task.getTitle())
-                .description(task.getDescription())
-                .creationDate(task.getCreationDate())
-                .deadLineDate(task.getDeadLineDate())
-                .active(task.isActive())
-                .employees(task.getEmployees())
-                .build();
+        return taskRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException(getTaskNotExistsMessage(id))
+        );
     }
 
     @Override
-    public Map<String, ?> updateTask(TaskDTO taskDTO, BindingResult bindingResult) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "changed";
-        result.put(message, Boolean.FALSE);
-        Task oldTask = taskRepository.findById(taskDTO.getId()).orElse(null);
-        if (oldTask == null) {
-            result.put("error", String.format("Task with %oid does not exists", taskDTO.getId()));
-            return result;
-        }
-        if (bindingResult.hasErrors()) {
-            result.putAll(getErrorsAction.execute(bindingResult));
-            return result;
-        }
-        Task newTask = copyTask(oldTask);
-        if (!Objects.equals(oldTask.getTitle(), taskDTO.getTitle())) {
-            newTask.setTitle(taskDTO.getTitle());
-        }
-        if (!Objects.equals(oldTask.getDescription(), taskDTO.getDescription())) {
-            newTask.setDescription(taskDTO.getDescription());
-        }
-        if (!Objects.equals(oldTask.getDeadLineDate(), LocalDate.parse(taskDTO.getDeadLineDate()))) {
-            newTask.setDeadLineDate(LocalDate.parse(taskDTO.getDeadLineDate()));
-        }
-        if (!oldTask.equals(newTask)) {
-            result.put(message, Boolean.TRUE);
-            taskRepository.save(newTask);
-        }
-        return result;
+    public TaskDTO getTaskDtoById(Long id) {
+        return taskMapper.map(getTaskById(id));
+    }
+
+    @Override
+    public void updateTask(TaskDTO taskDTO) {
+        Task savedTask = getTaskById(taskDTO.getId());
+        taskMapper.updateTaskFromDto(taskDTO, savedTask);
+        taskRepository.save(savedTask);
     }
 
     @Override
     @Transactional
-    public Map<String, ?> createTask(TaskDTO taskDTO, BindingResult bindingResult) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "created";
-
-        if (bindingResult.hasErrors()) {
-            result.put(message, Boolean.FALSE);
-            result.putAll(getErrorsAction.execute(bindingResult));
-            return result;
+    public void softDeleteAllTasksByProjectId(Long projectId) {
+        if (!projectService.isProjectWithIdExists(projectId)) {
+            throw new ResourceNotFoundException(getProjectNotExistsMessage(projectId));
         }
+        taskRepository.setActiveFalseAllTasksByProjectId(projectId);
+    }
 
+    @Override
+    @Transactional
+    public Long createTask(TaskDTO taskDTO) {
         Task task = taskMapper.map(taskDTO);
         task.setCreationDate(LocalDate.now());
         task.setDeadLineDate(LocalDate.parse(taskDTO.getDeadLineDate()));
         task.setActive(true);
         taskRepository.save(task);
-        result.put(message, Boolean.TRUE);
-        result.put("id", task.getId());
-        return result;
+        return task.getId();
     }
 
     @Override
     @Transactional
-    public Map<String, ?> softDeleteTask(Long taskId) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        String message = "deleted";
-        result.put(message, Boolean.FALSE);
-        Task task = taskRepository.findById(taskId).orElse(null);
-        if (task == null) {
-            result.put("error:", String.format("Task with %oid does not exists", taskId));
-            return result;
-        }
+    public void softDeleteTask(Long id) {
+        Task task = getTaskById(id);
         task.setActive(false);
         taskRepository.save(task);
-        result.put(message, Boolean.TRUE);
-        return result;
     }
+
+    @Override
+    public Page<TaskDTO> getAllProjectTasksPage(Pageable pageable, Long projectId) {
+        Page<Task> tasks = taskRepository.findAllByProjectId(pageable, projectId);
+        if (tasks.getContent().isEmpty()) {
+            throw new ResourceNotFoundException("Page not found");
+        }
+        return tasks.map(taskListMapper::map);
+    }
+
+    @Override
+    public Page<TaskDTO> getProjectActiveTasksPage(Pageable pageable, Long projectId) {
+        Page<Task> tasks = taskRepository.findAllByProjectIdAndActiveIsTrue(pageable, projectId);
+        if (tasks.getContent().isEmpty()) {
+            throw new ResourceNotFoundException("Page not found");
+        }
+        return tasks.map(taskListMapper::map);
+    }
+
 }

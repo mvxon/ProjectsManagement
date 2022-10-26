@@ -1,17 +1,25 @@
 package com.strigalev.projectsmanagement.controller;
 
+import com.strigalev.projectsmanagement.dto.ApiResponseEntity;
 import com.strigalev.projectsmanagement.dto.ProjectDTO;
 import com.strigalev.projectsmanagement.service.ProjectService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
+import static org.springframework.http.HttpStatus.CREATED;
+
+@Tag(name = "Project", description = "Endpoints for projects managing")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/projects")
@@ -19,44 +27,73 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @GetMapping
-    public ResponseEntity<?> getAllProjects() {
-        return ResponseEntity.ok(projectService.getAllProjects());
+    @Operation(summary = "Get projects page", responses = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "SUCCESS",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = Page.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "NOT FOUND", content = @Content),
+            @ApiResponse(responseCode = "500", description = "INTERNAL ERROR", content = @Content)
+    })
+    public ResponseEntity<?> getProjectsPage(Pageable pageable) {
+        return new ResponseEntity<>(projectService.getActiveProjectsPage(pageable), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get project by id", responses = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "SUCCESS",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProjectDTO.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "NOT FOUND", content = @Content),
+            @ApiResponse(responseCode = "500", description = "INTERNAL ERROR", content = @Content)
+    })
     public ResponseEntity<?> getProjectById(@PathVariable Long id) {
-        if (!projectService.isProjectWithIdExists(id)) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", String.format("Project with %oid does not exists", id));
-            return ResponseEntity.badRequest().body(response);
-        }
-        return ResponseEntity.ok(projectService.getProjectById(id));
+        return ResponseEntity.ok(projectService.getProjectDtoById(id));
     }
 
     @PostMapping
-    public ResponseEntity<?> createProject(@RequestBody @Valid ProjectDTO projectDTO, BindingResult bindingResult) {
-        Map<String, Object> response = new LinkedHashMap<>(projectService.createProject(projectDTO, bindingResult));
-        if (response.get("created") == Boolean.TRUE) {
-            return ResponseEntity.ok(response);
-        }
-        return ResponseEntity.badRequest().body(response);
+    @Operation(summary = "Create project", responses = {
+            @ApiResponse(responseCode = "201",
+                    description = "SUCCESSFULLY CREATED",
+                    content =  @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseEntity.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = @Content),
+            @ApiResponse(responseCode = "500", description = "INTERNAL ERROR", content = @Content)
+    })
+    public ResponseEntity<?> createProject(@RequestBody @Valid ProjectDTO projectDTO) {
+        return new ResponseEntity<>(
+                ApiResponseEntity.builder()
+                        .objectId(projectService.createProject(projectDTO))
+                        .build(),
+                CREATED
+        );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProject(@PathVariable Long id) {
-        Map<String, Object> response = new LinkedHashMap<>(projectService.softDeleteProject(id));
-        if (response.get("deleted") == Boolean.TRUE) {
-            return ResponseEntity.ok(response);
-        }
-        return ResponseEntity.badRequest().body(response);
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Delete project by id", responses = {
+            @ApiResponse(responseCode = "200", description = "SUCCESS"),
+            @ApiResponse(responseCode = "404", description = "NOT FOUND"),
+            @ApiResponse(responseCode = "500", description = "INTERNAL ERROR")
+    })
+    public void deleteProject(@PathVariable Long id) {
+        projectService.softDeleteProject(id);
     }
 
-    @PutMapping
-    public ResponseEntity<?> updateProject(@RequestBody @Valid ProjectDTO projectDTO, BindingResult bindingResult) {
-        Map<String, Object> response = new LinkedHashMap<>(projectService.updateProject(projectDTO, bindingResult));
-        if (response.get("changed") == Boolean.TRUE) {
-            ResponseEntity.ok(response);
-        }
-        return ResponseEntity.badRequest().body(response);
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Update project by id", responses = {
+            @ApiResponse(responseCode = "200", description = "SUCCESS"),
+            @ApiResponse(responseCode = "404", description = "NOT FOUND"),
+            @ApiResponse(responseCode = "500", description = "INTERNAL ERROR")
+    })
+    public void updateProject(@PathVariable Long id, @RequestBody @Valid ProjectDTO projectDTO) {
+        projectDTO.setId(id);
+        projectService.updateProject(projectDTO);
     }
 }

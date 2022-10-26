@@ -1,7 +1,6 @@
 package com.strigalev.projectsmanagement.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.strigalev.projectsmanagement.domain.Employee;
 import com.strigalev.projectsmanagement.validation.annotation.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -19,6 +17,7 @@ import java.util.List;
 public class TaskDTO {
     private Long id;
 
+    @NotEmpty(message = "Title should not be empty")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Size(min = 7, max = 40, message = "Title length should be between {min} and {max} chars")
     private String title;

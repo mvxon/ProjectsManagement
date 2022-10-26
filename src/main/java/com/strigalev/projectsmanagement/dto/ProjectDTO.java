@@ -17,6 +17,7 @@ import javax.validation.constraints.Size;
 @AllArgsConstructor
 @Builder
 public class ProjectDTO {
+
     private Long id;
 
     @ProjectName
@@ -30,7 +31,7 @@ public class ProjectDTO {
     private String title;
 
     @NotEmpty(message = "Customer should not be empty")
-    @Size(min = 3, max = 30, message = "Customer length should be between {min} and {max} chars" )
+    @Size(min = 3, max = 30, message = "Customer length should be between {min} and {max} chars")
     private String customer;
 
     @NotEmpty(message = "Description should not be empty")
@@ -45,5 +46,4 @@ public class ProjectDTO {
     @Date
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String deadLineDate;
-
 }
